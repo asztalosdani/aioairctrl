@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class Client:
     STATUS_PATH = "/sys/dev/status"
+    INFO_PATH = "/sys/dev/info"
     CONTROL_PATH = "/sys/dev/control"
     SYNC_PATH = "/sys/dev/sync"
 
@@ -55,6 +56,18 @@ class Client:
         client_key = response.payload.decode()
         logger.debug("synced: %s", client_key)
         self._encryption_context.set_client_key(client_key)
+
+    async def get_info(self):
+        logger.debug("retrieving info")
+        request = Message(
+            code=GET,
+            mtype=NON,
+            uri=f"coap://{self.host}:{self.port}{self.INFO_PATH}",
+        )
+        request.opt.observe = 0
+        response = await self._client_context.request(request).response
+        payload = response.payload.decode()
+        return json.loads(payload)
 
     async def get_status(self):
         logger.debug("retrieving status")
